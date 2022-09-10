@@ -29,7 +29,7 @@ def sitemap():
     return generate_sitemap(app)
 
 
-@app.route('/user', methods=['GET'])
+@app.route('/users', methods=['GET'])
 def handle_hello():
 
     users = User.query.all() #le pido info a la tabla User
@@ -39,6 +39,17 @@ def handle_hello():
         "results": userList
     }
 
+    return jsonify(response_body), 200
+
+# Sacar la info de todos los usuarios
+
+@app.route('/user/<int:id>', methods=['GET'])
+def handle_singleuser(id):
+    user_id = User.query.get(id)
+    user = user_id.serialize()
+    response_body = {
+        "results": user
+    }
     return jsonify(response_body), 200
 
 
@@ -124,7 +135,24 @@ def handle_singlefavourites(id):
     }
     return jsonify(response_body), 200
 
+@app.route('/user/favourites/<int:id>', methods=['GET'])
+def handle_singleuserfavourites(id):
+    favourites_id = User.query.get(id)
+    favourites = favourites_id.serialize()
+    response_body = {
+        "results": favourites
+    }
+    return jsonify(response_body), 200
 
+@app.route('/users/favourites', methods=['GET'])
+def handle_singleallfavourites():
+    favourites = User.query.all()
+    allfavourites = list(map(lambda favourites: favourites.serialize(),favourites))
+    response_body = {
+        "results": allfavourites
+    }
+    return jsonify(response_body), 200
+    
 # Añadir a favoritos
 
 @app.route('/user/<int:id>', methods=['POST'])
@@ -139,8 +167,74 @@ def handle_addfavourites(id):
     }
     return jsonify(response_body), 200
 
+# Añdir un caracter favorito
+
+@app.route('/user/<int:user_id>/favourites/people/<int:people_id>', methods=['POST'])
+def handle_favPeople(people_id, user_id):
+    people = Favourites.query.filter_by(characters_id = people_id).filter_by(user_id = user_id)
+    if people : 
+        return jsonify({"result" : "favourite already exist"})
+    else :
+        favPeople = Favourites(user_id = user_id, characters_id = people_id)
+        print(favPeople)
+        db.session.add(favPeople)
+        db.session.commit()
+        response_body = {
+            "results": "Favourite added"
+        }
+        return jsonify(response_body), 200
+
+# Añdir un planeta favorito
+
+@app.route('/user/<int:user_id>/favourites/planet/<int:planet_id>', methods=['POST'])
+def handle_favPlanet(planet_id, user_id):
+    planet = Favourites.query.filter_by(planets_id = planet_id).filter_by(user_id = user_id)
+    if planet : 
+        return jsonify({"result" : "favourite already exist"})
+    else :
+        favPlanet = Favourites(user_id = user_id, planets_id = planet_id)
+        print(favPlanet)
+        db.session.add(favPlanet)
+        db.session.commit()
+        response_body = {
+            "results": "Favourite added"
+        }
+        return jsonify(response_body), 200
+
+#Elimina people favoritos
+
+@app.route('/user/<int:user_id>/favourites/people/<int:people_id>', methods=['DELETE'])
+def handle_deletePeople(people_id, user_id):
+    favourite = Favourites.query.filter_by(user_id = user_id).filter_by(characters_id = people_id).first()
+    if Favourites :   
+        print(favourite)
+        db.session.delete(favourite)
+        db.session.commit()
+        response_body = {
+            "results": "Favourite was removed"
+        }
+        return jsonify(response_body), 200
+    else : 
+        return jsonify({"result": "favourite not found"})
+
+#Eliminar planet favoritos
+
+@app.route('/user/<int:user_id>/favourites/planet/<int:planet_id>', methods=['DELETE'])
+def handle_deletePlanet(planet_id, user_id):
+    favourite = Favourites.query.filter_by(user_id = user_id).filter_by(planets_id = planet_id).first()
+    if Favourites :   
+        print(favourite)
+        db.session.delete(favourite)
+        db.session.commit()
+        response_body = {
+            "results": "Favourite was removed"
+        }
+        return jsonify(response_body), 200
+    else : 
+        return jsonify({"result": "favourite not found"})
 
 # Eliminar Favoritos
+
 @app.route('/user/<int:id>/favourites/<int:user_id>', methods=['DELETE'])
 def handle_(id, user_id):
     favourite = Favourites.query.filter_by(id = user_id).all()
@@ -155,3 +249,6 @@ def handle_(id, user_id):
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))
     app.run(host='0.0.0.0', port=PORT, debug=False)
+
+
+

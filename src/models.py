@@ -20,7 +20,8 @@ class  User(db.Model):
         return {
             "id": self.id,
             "name": self.name,
-            "email": self.email
+            "email": self.email,
+            "favourites": list(map(lambda favourites: favourites.serialize(),self.favourites))
             # do not serialize the password, its a security breach
         }
 
@@ -80,11 +81,11 @@ class Favourites(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
-        nullable=False)
+        nullable=True)
     characters_id = db.Column(db.Integer, db.ForeignKey('characters.id'),
-        nullable=False)
+        nullable=True)
     planets_id = db.Column(db.Integer, db.ForeignKey('planets.id'),
-        nullable=False)
+        nullable=True)
     
 
     def __repr__(self):
